@@ -46,18 +46,18 @@ async function createAdminUser() {
 // });
 
 describe('GET /api/franchise I think', () => {
+  let franchiseName;
   beforeAll(async () => {
     const adminUser = await createAdminUser();
     const adminRes = await request(app).put('/api/auth').send(adminUser);
     adminToken = adminRes.body.token;
+    franchiseName = randomName()
+    const newFranchise = { name: franchiseName, location: 'New York', admins: [adminUser] };
 
-    const newStore = { name: 'Pizza Pocket', location: 'anywhere' };
-
-    const res = await request(app)
-      .post(`/api/franchise/${franchiseId}/store`)
+    await request(app)
+      .post('/api/franchise')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send(newStore);    
-    testFranchiseId = res.body.id;
+      .send(newFranchise);
   }); 
 
   test('get all franchises', async () => {
