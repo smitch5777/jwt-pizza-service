@@ -51,12 +51,13 @@ describe('GET /api/franchise I think', () => {
     const adminRes = await request(app).put('/api/auth').send(adminUser);
     adminToken = adminRes.body.token;
 
-    const franchiseRes = await request(app)
-      .post('/api/franchise')
+    const newStore = { name: 'Pizza Pocket', location: 'anywhere' };
+
+    const res = await request(app)
+      .post(`/api/franchise/${franchiseId}/store`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send(testFranchise);
-    
-    testFranchiseId = franchiseRes.body.id;
+      .send(newStore);    
+    testFranchiseId = res.body.id;
   }); 
 
   test('get all franchises', async () => {
@@ -239,17 +240,6 @@ describe('POST /api/franchise/:franchiseId/store', () => {
 
     expect(res.status).toBe(200);
   });
-
-  // test('should create a store successfully when user is a franchise admin', async () => {
-  //   const newStore = { name: 'Another Store', location: 'Los Angeles' };
-
-  //   const res = await request(app)
-  //     .post(`/api/franchise/${franchiseId}/store`)
-  //     .set('Authorization', `Bearer ${franchiseAdminToken}`)
-  //     .send(newStore);
-
-  //   expect(res.status).toBe(200);
-  // });
 
   test('should fail to create a store when user is unauthorized', async () => {
     const newStore = { name: 'Unauthorized Store', location: 'Houston' };
