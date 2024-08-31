@@ -65,7 +65,7 @@ describe('GET /api/franchise I think', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: 'pizzaPocket' })
+        expect.objectContaining({ name: franchiseName })
       ])
     );
   });
