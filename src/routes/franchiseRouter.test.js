@@ -45,14 +45,33 @@ async function createAdminUser() {
 //   testFranchiseId = franchiseRes.body.id;
 // });
 
-test('get all franchises', async () => {
-  const res = await request(app).get('/api/franchise').set('Authorization', `Bearer ${testUserAuthToken}`);
-  expect(res.status).toBe(200);
-  expect(res.body).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ name: 'pizzaPocket' })
-    ])
-  );
+describe('GET /api/franchise I think', () => {
+  beforeAll(async () => {
+    const registerRes = await request(app).post('/api/auth').send({
+      name: 'pizza franchisee',
+      email: 'f@jwt.com',
+      password: 'franchisee'
+    });
+    testUserAuthToken = registerRes.body.token;
+
+    const franchiseRes = await request(app)
+      .post('/api/franchise')
+      .set('Authorization', `Bearer ${testUserAuthToken}`)
+      .send(testFranchise);
+    
+    testFranchiseId = franchiseRes.body.id;
+  }); 
+
+  test('get all franchises', async () => {
+    const res = await request(app).get('/api/franchise').set('Authorization', `Bearer ${testUserAuthToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'pizzaPocket' })
+      ])
+    );
+  });
+
 });
 
 
