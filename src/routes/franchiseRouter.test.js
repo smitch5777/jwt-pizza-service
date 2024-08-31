@@ -47,16 +47,13 @@ async function createAdminUser() {
 
 describe('GET /api/franchise I think', () => {
   beforeAll(async () => {
-    const registerRes = await request(app).post('/api/auth').send({
-      name: 'pizza franchisee',
-      email: 'f@jwt.com',
-      password: 'franchisee'
-    });
-    testUserAuthToken = registerRes.body.token;
+    const adminUser = await createAdminUser();
+    const adminRes = await request(app).put('/api/auth').send(adminUser);
+    adminToken = adminRes.body.token;
 
     const franchiseRes = await request(app)
       .post('/api/franchise')
-      .set('Authorization', `Bearer ${testUserAuthToken}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send(testFranchise);
     
     testFranchiseId = franchiseRes.body.id;
