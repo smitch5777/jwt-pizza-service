@@ -145,22 +145,3 @@ jobs:
           service: jwt-pizza-service
           cluster: jwt-pizza-service
           wait-for-service-stability: false
-  release:
-    needs:
-      - build
-      - deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create Release
-        uses: ncipollo/release-action@v1
-        env:
-          version: ${{needs.build.outputs.version}}
-        with:
-          tag: version-${{ env.version }}
-          name: Version ${{ env.version }}
-          body: |
-            ## 🚀 Changes
-
-            ${{ github.event.head_commit.message }}
-
-            **commit**: ${{ github.sha }}
