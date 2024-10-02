@@ -207,7 +207,7 @@ class Metrics {
 
   sendMetricsToGrafana(metrics) {
     fetch(`${config.metrics.url}`, {
-      method: "post",
+      method: "POST",
       body: metrics,
       headers: {
         Authorization: `Bearer ${config.metrics.userId}:${config.metrics.apiKey}`,
