@@ -98,12 +98,12 @@ class Metrics {
       }
 
       if (req.path.includes("/order") && req.method === "POST") {
-        const { items } = req.body; // Get the items array from the order
+        const { items } = req.body;
         const creationLatency = duration;
-        const success = res.statusCode === 200; // Assuming a 200 response indicates success
+        const success = res.statusCode === 200;
 
         items.forEach((item) => {
-          const price = item.price; // Get the price of each pizza
+          const price = item.price;
           this.recordPizzaSale(price, creationLatency, success);
         });
       }
