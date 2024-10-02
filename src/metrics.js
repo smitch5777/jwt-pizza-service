@@ -62,7 +62,7 @@ class Metrics {
     this.sendMetricsPeriodically(10000);
   }
 
-  requestTracker(req, res, next) {
+  requestTracker = (req, res, next) => {
     const start = Date.now();
 
     res.on("finish", () => {
@@ -110,7 +110,7 @@ class Metrics {
     });
 
     next();
-  }
+  };
   systemMetrics(buf) {
     const cpuUsage = getCpuUsagePercentage();
     const memoryUsage = getMemoryUsagePercentage();
