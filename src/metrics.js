@@ -6,12 +6,16 @@ class MetricBuilder {
     this.metrics = [];
   }
 
-  addMetric(metricPrefix, metricName, metricValue, labels = {}) {
+  addMetric(metricPrefix, metricName, metricValue, labels) {
     const labelsString = Object.entries(labels)
       .map(([key, value]) => `${key}=${value}`)
       .join(",");
-
-    const metric = `${metricPrefix},source=${config.metrics.source},${labelsString} ${metricName}=${metricValue}`;
+    let metric;
+    if (JSON.stringify(labels) != JSON.stringify({})) {
+      metric = `${metricPrefix},source=${config.metrics.source},${labelsString} ${metricName}=${metricValue}`;
+    } else {
+      metric = `${metricPrefix},source=${config.metrics.source},${metricName}=${metricValue}`;
+    }
 
     this.metrics.push(metric);
   }
@@ -111,18 +115,32 @@ class Metrics {
 
     next();
   };
+
   systemMetrics(buf) {
     const cpuUsage = getCpuUsagePercentage();
     const memoryUsage = getMemoryUsagePercentage();
 
-    buf.addMetric("cpu_usage_percentage", cpuUsage);
-    buf.addMetric("memory_usage_percentage", memoryUsage);
+    buf.addMetric("system", "cpu_usage_percentage", cpuUsage, {
+      pizza: "cpu_usage",
+    });
+    buf.addMetric("system", "memory_usage_percentage", memoryUsage, {
+      pizza: "memory_usage",
+    });
   }
 
   authMetrics(buf) {
-    buf.addMetric("auth_attempts_total", this.totalAuthAttempts);
-    buf.addMetric("auth_attempts_successful", this.successfulAuthAttempts);
-    buf.addMetric("auth_attempts_failed", this.failedAuthAttempts);
+    buf.addMetric("auth", "auth_attempts_total", this.totalAuthAttempts, {
+      pizza: "auth_attempts",
+    });
+    buf.addMetric(
+      "auth",
+      "auth_attempts_successful",
+      this.successfulAuthAttempts,
+      { pizza: "successful_auth" }
+    );
+    buf.addMetric("auth", "auth_attempts_failed", this.failedAuthAttempts, {
+      pizza: "failed_auth",
+    });
   }
 
   httpMetrics(buf) {
@@ -131,31 +149,60 @@ class Metrics {
         ? (this.totalLatency / this.latencies.length).toFixed(2)
         : 0;
 
-    buf.addMetric("request_total", this.totalRequests);
+    buf.addMetric("http", "request_total", this.totalRequests, {
+      pizza: "total",
+    });
 
-    buf.addMetric("request_total", this.totalGets, { method: "GET" });
-    buf.addMetric("request_total", this.totalPosts, { method: "POST" });
-    buf.addMetric("request_total", this.totalDeletes, { method: "DELETE" });
+    buf.addMetric("http", "request_total", this.totalGets, { method: "GET" });
+    buf.addMetric("http", "request_total", this.totalPosts, { method: "POST" });
+    buf.addMetric("http", "request_total", this.totalDeletes, {
+      method: "DELETE",
+    });
 
-    buf.addMetric("request_latency_average", averageLatency);
+    buf.addMetric("user", "request_latency_average", averageLatency, {
+      pizza: "latency",
+    });
 
     this.latencies = [];
   }
 
   userMetrics(buf) {
-    buf.addMetric("active_users_total", this.activeUsersCount);
+    buf.addMetric("user", "active_users_total", this.activeUsersCount, {
+      pizza: "active_users",
+    });
   }
 
   purchaseMetrics(buf) {
-    buf.addMetric("pizzas_sold_total", this.totalPizzasSold);
-    buf.addMetric("pizzas_sold_minute", this.calculatePizzasSoldPerMinute());
-    buf.addMetric("revenue_total", this.totalRevenue);
-    buf.addMetric("revenue_minute", this.calculateRevenuePerMinute());
+    buf.addMetric("purchase", "pizzas_sold_total", this.totalPizzasSold, {
+      pizza: "sold_total",
+    });
+    // buf.addMetric(
+    //   "purchase",
+    //   "pizzas_sold_minute",
+    //   this.calculatePizzasSoldPerMinute(),
+    //   { pizza: "sold_minute" }
+    // );
+    buf.addMetric("purchase", "revenue_total", this.totalRevenue, {
+      pizza: "revenue_total",
+    });
+    // buf.addMetric(
+    //   "purchase",
+    //   "revenue_minute",
+    //   this.calculateRevenuePerMinute(),
+    //   { pizza: "revenue_minute" }
+    // );
     buf.addMetric(
+      "purchase",
       "creation_latency_average",
-      this.calculateCreationLatencyAverage()
+      this.calculateCreationLatencyAverage(),
+      { pizza: "creation_latency" }
     );
-    buf.addMetric("creation_failures_total", this.totalCreationFailures);
+    buf.addMetric(
+      "purchase",
+      "creation_failures_total",
+      this.totalCreationFailures,
+      { pizza: "creation_failures" }
+    );
   }
 
   recordAuthAttempt(success) {
@@ -194,6 +241,7 @@ class Metrics {
         this.userMetrics(buf);
         this.purchaseMetrics(buf);
         this.authMetrics(buf);
+        buf.addMetric("http", "random_total_test", 10, { method: "GET" });
 
         const metrics = buf.toString("\n");
         this.sendMetricsToGrafana(metrics);
@@ -206,6 +254,7 @@ class Metrics {
   }
 
   sendMetricsToGrafana(metrics) {
+    console.log(metrics);
     fetch(`${config.metrics.url}`, {
       method: "POST",
       body: metrics,
@@ -214,6 +263,7 @@ class Metrics {
       },
     })
       .then((response) => {
+        console.log(JSON.stringify(response));
         if (!response.ok) {
           console.error("Failed to push metrics data to Grafana");
         } else {
